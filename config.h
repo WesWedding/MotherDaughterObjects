@@ -4,6 +4,9 @@
 
 #define TOUCH_THRESHOLD 300
 
+// Uncomment this if you are building for the mother pod.
+#define IS_MOTHER_POD
+
 /************************* Adafruit.io Setup *********************************/
 
 #define AIO_USERNAME  "Adafruit IO Username"

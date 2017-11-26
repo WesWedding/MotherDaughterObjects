@@ -10,6 +10,7 @@
 #include <TweenDuino.h>
 #include <Adafruit_NeoPixel.h>
 #include "touch.h"
+#include "wifi.h"
 
 /************************** Configuration ***********************************/
 
@@ -18,22 +19,34 @@
 #include "config.h"
 
 /*************************** Sketch Code ************************************/
-int motherVal = 0;
+int remoteVal = 0;
 
 Adafruit_NeoPixel stripLEDs = Adafruit_NeoPixel(PIXEL_COUNT, LED_PIN, NEO_GRBW);
 
 // 10M resistor between "read" pin and read pin, add a capacative surface/foil to read pin.
 Touch touch(CAP_SEND_PIN, CAP_READ_PIN);
+Wifi wifi;
 
 // Start dim (0).
 float brightness = 0.0;
+
+int myFeed = 0;
 
 TweenDuino::Timeline timeline;
 
 void setup() {
   Serial.begin(115200);
   stripLEDs.begin();
-  wifi_begin();
+
+  myFeed = wifi.addFeed("pdxtouched");
+
+#ifdef IS_MOTHER_POD
+  wifi.addFeed("pdxtouched", handlePdxTouch);
+  wifi.addFeed("altouched", handleAlabamaTouch);
+#else  
+  wifi.addFeed("mothertouched", handleMotherTouch);
+#endif
+  wifi.begin();
   touch.setOnTouchChanged(onTouchChanged);
 
   addTweensTo(timeline);
@@ -52,11 +65,16 @@ void loop() {
   long loopStart = millis();
   timeline.update(loopStart);
   touch.update();
-  wifi_update();
+  wifi.update();
+
+  // Turn wifi back on if the animations aren't playing.
+  if (wifi.isPaused() && !timeline.isActive()) {
+    wifi.unpause();
+  }
 
   // Sensing touch makes things halt briefly, leading to jerky animations.
   // Don't sense touch if we're playing our animation or planning to do so.
-  bool shouldReadTouch = !timeline.isActive() || motherVal > 0;
+  bool shouldReadTouch = !timeline.isActive() || remoteVal > 0;
   if (shouldReadTouch) {
     touch.watch();
   } else {
@@ -71,16 +89,20 @@ void loop() {
   //Serial.print("Remote value: "); Serial.println(motherVal);
   //Serial.print("TL is active: "); Serial.println(timeline.isActive());
 
-  if (motherVal > 0) {
-    Serial.println("Mother val is good.");
+  if (remoteVal > 0) {
+    //Serial.println("Mother val is good.");
     if (timeline.isActive()) {
-      Serial.println("Not going to start lights because they're already going.");
+      //Serial.println("Not going to start lights because they're already going.");
     }
   }
-  if (motherVal > 0 && !timeline.isActive()) {
-    Serial.println("Show LEDS because motherVal is good.");
+  if (remoteVal > 0 && !timeline.isActive()) {
+    //Serial.println("Show LEDS because motherVal is good.");
     timeline.restartFrom(millis());
+    wifi.pause();
     touch.ignore();
+
+    // Reset motherVal to zero because we might miss packets telling us it has been set to 0.
+    remoteVal = 0;
   }
 
   // 3 colors: Red, Green, Blue whose values range from 0-255.
@@ -92,9 +114,38 @@ void loop() {
   stripLEDs.show();
 }
 
+#ifdef IS_MOTHER_POD
+void handleAlabamaTouch(AdafruitIO_Data *data) {
+  Serial.print(F("Alabama feed"));
+  Serial.print(F("received <- "));
+  
+  remoteVal = data->toInt();
+  Serial.println(remoteVal);
+}
+void handlePdxTouch(AdafruitIO_Data *data) {
+  Serial.print(F("Pdx feed"));
+  Serial.print(F("received <- "));
+  
+  remoteVal = data->toInt();
+  Serial.println(remoteVal);
+}
+
+#else
+
+void handleMotherTouch(AdafruitIO_Data *data) {
+
+  Serial.print(F("Mother feed"));
+  Serial.print(F("received <- "));
+  
+  remoteVal = data->toInt();
+  Serial.println(remoteVal);
+}
+
+#endif
+
 void onTouchChanged(bool *isTouched) {
   Serial.print("Sending touch state: " ); Serial.println(*isTouched);
-  wifi_send(*isTouched);
+  wifi.sendTouch(myFeed, *isTouched);
 }
 
 void setStripColors(Adafruit_NeoPixel &strip, uint32_t color) {
