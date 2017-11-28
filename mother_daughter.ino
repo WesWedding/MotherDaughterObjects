@@ -21,7 +21,7 @@
 /*************************** Sketch Code ************************************/
 int remoteVal = 0;
 
-Adafruit_NeoPixel stripLEDs = Adafruit_NeoPixel(PIXEL_COUNT, LED_PIN, NEO_GRBW);
+Adafruit_NeoPixel stripLEDs = Adafruit_NeoPixel(PIXEL_COUNT, LED_PIN, NEO_RGB);
 
 // 10M resistor between "read" pin and read pin, add a capacative surface/foil to read pin.
 Touch touch(CAP_SEND_PIN, CAP_READ_PIN);
@@ -38,13 +38,15 @@ void setup() {
   Serial.begin(115200);
   stripLEDs.begin();
 
-  myFeed = wifi.addFeed("pdxtouched");
-
 #ifdef IS_MOTHER_POD
+  myFeed = wifi.addFeed("mothertouched");
   wifi.addFeed("pdxtouched", handlePdxTouch);
-  wifi.addFeed("altouched", handleAlabamaTouch);
+  Serial.println("Added pdx feed.");
 #else  
+  myFeed = wifi.addFeed("pdxtouched");
+  //myFeed = wifi.addFeed("altouched");
   wifi.addFeed("mothertouched", handleMotherTouch);
+  Serial.println("Added mothertouched feed.");
 #endif
   wifi.begin();
   touch.setOnTouchChanged(onTouchChanged);
@@ -69,6 +71,7 @@ void loop() {
 
   // Turn wifi back on if the animations aren't playing.
   if (wifi.isPaused() && !timeline.isActive()) {
+    Serial.println("Unpausing wifi");
     wifi.unpause();
   }
 
@@ -106,7 +109,7 @@ void loop() {
   }
 
   // 3 colors: Red, Green, Blue whose values range from 0-255.
-  const uint32_t stripColor = stripLEDs.Color(255 * brightness , 100, 255 * brightness, 0); // Colors are off, white LED is pure white.
+  const uint32_t stripColor = stripLEDs.Color(255 * brightness, 100 * brightness, 255 * brightness, 0); // Colors are off, white LED is pure white.
   
   setStripColors(stripLEDs, stripColor);
 
@@ -114,14 +117,6 @@ void loop() {
   stripLEDs.show();
 }
 
-#ifdef IS_MOTHER_POD
-void handleAlabamaTouch(AdafruitIO_Data *data) {
-  Serial.print(F("Alabama feed"));
-  Serial.print(F("received <- "));
-  
-  remoteVal = data->toInt();
-  Serial.println(remoteVal);
-}
 void handlePdxTouch(AdafruitIO_Data *data) {
   Serial.print(F("Pdx feed"));
   Serial.print(F("received <- "));
@@ -129,8 +124,6 @@ void handlePdxTouch(AdafruitIO_Data *data) {
   remoteVal = data->toInt();
   Serial.println(remoteVal);
 }
-
-#else
 
 void handleMotherTouch(AdafruitIO_Data *data) {
 
@@ -140,8 +133,6 @@ void handleMotherTouch(AdafruitIO_Data *data) {
   remoteVal = data->toInt();
   Serial.println(remoteVal);
 }
-
-#endif
 
 void onTouchChanged(bool *isTouched) {
   Serial.print("Sending touch state: " ); Serial.println(*isTouched);

@@ -5,7 +5,7 @@
 #define TOUCH_THRESHOLD 300
 
 // Uncomment this if you are building for the mother pod.
-#define IS_MOTHER_POD
+//#define IS_MOTHER_POD
 
 /************************* Adafruit.io Setup *********************************/
 
