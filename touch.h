@@ -34,6 +34,7 @@ public:
         for (int thisReading = 0; thisReading < numReadings; thisReading++) {
           readings[thisReading] = 0;
         }
+      }
 
   void setOnTouchChanged(TouchChangedCallback touched) {
     cb = touched;    
@@ -51,7 +52,7 @@ public:
         Serial.print("Touch value: "); Serial.println(capReading);
       }
     } else {
-      Serial.println("Not reading touch.");
+      //Serial.println("Not reading touch.");
     }
 
     isTouched = averageTouchesAboveThreshold(capReading);

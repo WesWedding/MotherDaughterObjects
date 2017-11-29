@@ -113,7 +113,7 @@ void loop() {
   }
 
   // 3 colors: Red, Green, Blue whose values range from 0-255.
-  const uint32_t stripColor = stripLEDs.Color(255 * brightness, 100 * brightness, 255 * brightness, 0); // Colors are off, white LED is pure white.
+  const uint32_t stripColor = stripLEDs.Color(108 * brightness, 235 * brightness, 10 * brightness, 0); // Colors are off, white LED is pure white.
   
   setStripColors(stripLEDs, stripColor);
 
@@ -156,10 +156,21 @@ void setStripColors(Adafruit_NeoPixel &strip, uint32_t color) {
 // Make a pattern.
 void addTweensTo(TweenDuino::Timeline &timeline) {
 
+ timeline.addTo(brightness, 1.0, 50);
+  timeline.addTo(brightness, 0.25, 50);
+  timeline.addTo(brightness, 1.0, 50);
+  timeline.addTo(brightness, 0.25, 50);
+  timeline.addTo(brightness, 1.0, 100);
+  timeline.addTo(brightness, 1.0, 2000);
+  timeline.addTo(brightness, 0.0, 250);
+  timeline.addTo(brightness, 1.0, 500);
+  timeline.addTo(brightness, 0.25, 500);
+  timeline.addTo(brightness, 1.0, 500);
+  timeline.addTo(brightness, 0.25, 500);
   timeline.addTo(brightness, 1.0, 1000);
-  timeline.addTo(brightness, 0.5, 1000);
+  timeline.addTo(brightness, 0.25, 1000);
   timeline.addTo(brightness, 1.0, 1000);
-  timeline.addTo(brightness, 0.0, 1000);
+  timeline.addTo(brightness, 0.0, 2000);
 }
 
 
