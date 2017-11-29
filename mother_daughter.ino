@@ -20,6 +20,7 @@
 
 /*************************** Sketch Code ************************************/
 int remoteVal = 0;
+bool remoteWasTouched = false;
 
 Adafruit_NeoPixel stripLEDs = Adafruit_NeoPixel(PIXEL_COUNT, LED_PIN, NEO_RGB);
 
@@ -98,7 +99,7 @@ void loop() {
       //Serial.println("Not going to start lights because they're already going.");
     }
   }
-  if (remoteVal > 0 && !timeline.isActive()) {
+  if (remoteWasTouched && !timeline.isActive()) {
     //Serial.println("Show LEDS because motherVal is good.");
     timeline.restartFrom(millis());
     wifi.pause();
@@ -106,6 +107,9 @@ void loop() {
 
     // Reset motherVal to zero because we might miss packets telling us it has been set to 0.
     remoteVal = 0;
+
+    // We've "consumed" the latest touch.
+    remoteWasTouched = false;
   }
 
   // 3 colors: Red, Green, Blue whose values range from 0-255.
@@ -122,6 +126,7 @@ void handlePdxTouch(AdafruitIO_Data *data) {
   Serial.print(F("received <- "));
   
   remoteVal = data->toInt();
+  remoteWasTouched = true;
   Serial.println(remoteVal);
 }
 
@@ -131,6 +136,7 @@ void handleMotherTouch(AdafruitIO_Data *data) {
   Serial.print(F("received <- "));
   
   remoteVal = data->toInt();
+  remoteWasTouched = true;
   Serial.println(remoteVal);
 }
 
