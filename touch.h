@@ -11,6 +11,13 @@ class Touch {
   bool shouldReadTouch;
   TouchChangedCallback cb;
 
+  // For reading smoothings
+  long readings[3];
+  int readIndex;
+  long total;
+  long average;
+  int numReadings;
+
 
 public:
   Touch(int sendPin, int receivePin): 
@@ -18,8 +25,14 @@ public:
       previousIsTouchedVal(false),
       isTouched(false),
       shouldReadTouch(false),
+      readIndex(0),
+      total(0),
+      average(0),
+      numReadings(3),
       cb(0) {
         capSensor.set_CS_Timeout_Millis(2000);
+        for (int thisReading = 0; thisReading < numReadings; thisReading++) {
+          readings[thisReading] = 0;
         }
 
   void setOnTouchChanged(TouchChangedCallback touched) {
@@ -41,7 +54,7 @@ public:
       Serial.println("Not reading touch.");
     }
 
-    isTouched = capReading > TOUCH_THRESHOLD;
+    isTouched = averageTouchesAboveThreshold(capReading);
     if (isTouched) {
       digitalWrite(ONBOARD_LED, LOW);
     } else {
@@ -61,6 +74,26 @@ public:
   }
   void watch() {
     shouldReadTouch = true;
+  }
+
+  bool averageTouchesAboveThreshold(long capReading ) {
+    total = total - readings[readIndex];
+    readings[readIndex] = capReading;
+    total = total + readings[readIndex];
+
+    readIndex = readIndex + 1;
+    // if we're at the end of the array...
+    if (readIndex >= numReadings) {
+      // ...wrap around to the beginning:
+      readIndex = 0;
+    }
+    average = total / numReadings;
+    Serial.print("Ave: "); Serial.println(average);
+    if (average > TOUCH_THRESHOLD) {
+      return true;
+    }
+
+    return false;
   }
 };
 
