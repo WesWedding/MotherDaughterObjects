@@ -18,7 +18,9 @@ public:
       previousIsTouchedVal(false),
       isTouched(false),
       shouldReadTouch(false),
-      cb(0) {}
+      cb(0) {
+        capSensor.set_CS_Timeout_Millis(2000);
+        }
 
   void setOnTouchChanged(TouchChangedCallback touched) {
     cb = touched;    

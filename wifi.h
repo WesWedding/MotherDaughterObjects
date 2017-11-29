@@ -8,9 +8,6 @@
 
 /****************************** Feeds ***************************************/
 
-// Setup a feed called 'touched' for publishing our touch state.
-AdafruitIO_Feed *touched = io.feed("pdxtouched");
-
 // TODO: Watch throttling
 
 class Wifi {
